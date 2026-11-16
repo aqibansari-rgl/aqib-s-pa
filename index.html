@@ -2,17 +2,20 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1117" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)">
 <title>Personal Agent</title>
 <style>
 :root{--bg:#f6f7f9;--card:#fff;--tx:#1b2230;--dim:#667085;--line:#e4e7ec;--ac:#2f5bea;--acs:#eef2ff;--ok:#067647;--oks:#ecfdf3;--warn:#b54708;--warns:#fffaeb;--err:#b42318;--errs:#fef3f2;--hd:#f9fafb}
 @media(prefers-color-scheme:dark){:root{--bg:#0e1117;--card:#161b24;--tx:#e6e9ef;--dim:#9aa4b5;--line:#262d3a;--ac:#7c9cff;--acs:#1b2440;--ok:#4ade80;--oks:#10281c;--warn:#fbbf24;--warns:#2b2210;--err:#f87171;--errs:#2d1517;--hd:#1b212c}}
 *{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%}
 body{background:var(--bg);color:var(--tx);font:15px/1.6 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-.wrap{max-width:860px;margin:0 auto;padding:24px 20px 0;min-height:100vh;display:flex;flex-direction:column}
+.wrap{max-width:860px;margin:0 auto;padding:24px 20px 0;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env(safe-area-inset-right));padding-top:max(24px,env(safe-area-inset-top))}
 .stage{flex:1;display:flex;flex-direction:column;min-height:0}
 body.empty .stage{justify-content:center;padding-bottom:12vh}
-.composer{position:sticky;bottom:0;background:var(--bg);padding:12px 0 20px}
+.composer{position:sticky;bottom:0;background:var(--bg);padding:12px 0 max(20px,env(safe-area-inset-bottom))}
 body.empty .composer{position:static;padding:0}
 .hello{text-align:center;font-size:28px;font-weight:650;letter-spacing:-.02em;margin-bottom:22px}
 .hello small{display:block;font-size:14px;font-weight:400;color:var(--dim);margin-top:6px;letter-spacing:0}
@@ -68,7 +71,27 @@ tbody tr:first-child td{border-top:0}
 .load{display:flex;align-items:center;gap:12px;color:var(--dim)}
 .spin{width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--ac);border-radius:50%;animation:s .8s linear infinite}
 @keyframes s{to{transform:rotate(360deg)}}
-@media(max-width:560px){form{flex-direction:column;align-items:stretch}.seg{margin-left:0}}
+@media(max-width:640px){
+  textarea{font-size:16px}
+  .wrap{padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right))}
+  h1{font-size:18px}
+  .hello{font-size:23px;margin-bottom:18px}
+  .card{padding:12px}
+  .send{padding:0 16px}
+  .ans{padding:16px}
+  .q span{max-width:90%}
+  .row{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-right:-12px;padding-right:12px}
+  .chip{white-space:nowrap;flex:none}
+  .tw{border:0;overflow:visible}
+  table{min-width:0;display:block}
+  thead{display:none}
+  tbody{display:grid;gap:10px}
+  tr{display:block;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  td{display:grid;grid-template-columns:96px 1fr;gap:10px;padding:10px 12px;border-top:1px solid var(--line)}
+  td:first-child{border-top:0}
+  td::before{content:attr(data-label);color:var(--dim);font-size:12px;font-weight:600}
+  .meta{flex-wrap:wrap}
+}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
@@ -85,7 +108,7 @@ tbody tr:first-child td{border-top:0}
     <div class="composer">
   <div class="card">
       <form id="f">
-        <textarea id="q" rows="1" aria-label="Message" placeholder="Ask your agent… (Ctrl+Enter to send)">What are task need to be done.</textarea>
+        <textarea id="q" rows="1" aria-label="Message" placeholder="Ask your agent…">What are task need to be done.</textarea>
         <button class="send" id="go" type="submit">Send</button>
       </form>
       <div class="row">
@@ -141,7 +164,8 @@ function md(src){
       const row=x=>x.trim().replace(/^\||\|$/g,'').split('|');
       let t='<div class="tw"><table><thead><tr>'+row(l).map(c=>`<th>${cell(c,1)}</th>`).join('')+'</tr></thead><tbody>';
       i+=2;
-      while(i<L.length&&isRow(L[i])){t+='<tr>'+row(L[i]).map(c=>`<td>${cell(c)}</td>`).join('')+'</tr>';i++}
+      while(i<L.length&&isRow(L[i])){const hs=row(l).map(x=>esc(x.trim().replace(/\*\*/g,'')));
+        t+='<tr>'+row(L[i]).map((c,k)=>`<td data-label="${hs[k]||''}">${cell(c)}</td>`).join('')+'</tr>';i++}
       o+=t+'</tbody></table></div>';continue;
     }
     let m=li(l);
