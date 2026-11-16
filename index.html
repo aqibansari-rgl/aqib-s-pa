@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Personal Agent</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tx:#1b2230;--dim:#667085;--line:#e4e7ec;--ac:#2f5bea;--acs:#eef2ff;--ok:#067647;--oks:#ecfdf3;--warn:#b54708;--warns:#fffaeb;--err:#b42318;--errs:#fef3f2;--hd:#f9fafb}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1117;--card:#161b24;--tx:#e6e9ef;--dim:#9aa4b5;--line:#262d3a;--ac:#7c9cff;--acs:#1b2440;--ok:#4ade80;--oks:#10281c;--warn:#fbbf24;--warns:#2b2210;--err:#f87171;--errs:#2d1517;--hd:#1b212c}}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--tx);font:15px/1.6 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:24px 20px 0;min-height:100vh;display:flex;flex-direction:column}
+.stage{flex:1;display:flex;flex-direction:column;min-height:0}
+body.empty .stage{justify-content:center;padding-bottom:12vh}
+.composer{position:sticky;bottom:0;background:var(--bg);padding:12px 0 20px}
+body.empty .composer{position:static;padding:0}
+.hello{text-align:center;font-size:28px;font-weight:650;letter-spacing:-.02em;margin-bottom:22px}
+.hello small{display:block;font-size:14px;font-weight:400;color:var(--dim);margin-top:6px;letter-spacing:0}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+h1{font-size:20px;font-weight:650;letter-spacing:-.01em}
+.sub{color:var(--dim);font-size:13px}
+.status{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim)}
+.dot{width:8px;height:8px;border-radius:50%;background:#98a2b3}
+.dot.ok{background:#12b76a}.dot.busy{background:var(--ac);animation:pulse 1s infinite}.dot.bad{background:#f04438}
+@keyframes pulse{50%{opacity:.3}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+form{display:flex;gap:10px;align-items:flex-end}
+textarea{flex:1;min-height:48px;max-height:calc(10 * 1.6em + 24px);resize:none;overflow-y:hidden;line-height:1.6;background:var(--card);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:11px 13px;font:inherit}
+textarea:focus{outline:2px solid var(--ac);outline-offset:-1px;border-color:transparent}
+button{font:inherit;font-weight:600;border-radius:8px;cursor:pointer}
+.send{background:var(--ac);color:#fff;border:0;padding:0 22px;height:48px}
+@media(prefers-color-scheme:dark){.send{color:#0e1117}}
+.send:hover{filter:brightness(1.08)}.send:disabled{opacity:.55;cursor:wait}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.chip{background:var(--hd);border:1px solid var(--line);color:var(--tx);font-weight:500;font-size:13px;padding:5px 12px;border-radius:999px}
+.chip:hover{border-color:var(--ac);color:var(--ac)}
+.seg{margin-left:auto;display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{background:transparent;border:0;color:var(--dim);font-size:12px;padding:5px 12px;border-radius:0}
+.seg button.on{background:var(--acs);color:var(--ac)}
+#thread{display:grid;gap:16px;align-content:start;flex:1;padding:8px 0 16px}
+body.empty #thread{display:none}
+body:not(.empty) .hello{display:none}
+.q{display:flex;justify-content:flex-end}
+.q span{background:var(--ac);color:#fff;padding:8px 14px;border-radius:12px 12px 2px 12px;max-width:80%}
+@media(prefers-color-scheme:dark){.q span{color:#0e1117}}
+.ans{padding:20px 22px}
+.ans>*:first-child{margin-top:0}
+.ans p{margin:10px 0}
+.ans h3{font-size:12px;font-weight:650;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin:22px 0 8px;padding-top:16px;border-top:1px solid var(--line)}
+.ans ol,.ans ul{padding-left:22px;margin:8px 0}
+.ans li{margin:6px 0;padding-left:4px}
+.ans li::marker{color:var(--ac);font-weight:600}
+.ans a{color:var(--ac);text-decoration:underline;text-underline-offset:2px;word-break:break-word}
+.ans a:hover{filter:brightness(1.2)}
+.ans code{background:var(--hd);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:13px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;margin:12px 0}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+th{background:var(--hd);text-align:left;font-weight:600;color:var(--dim);font-size:12px;padding:10px 14px;border-bottom:1px solid var(--line)}
+td{padding:12px 14px;vertical-align:top;border-top:1px solid var(--line)}
+tbody tr:first-child td{border-top:0}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600;background:var(--warns);color:var(--warn);white-space:nowrap}
+.pill.ok{background:var(--oks);color:var(--ok)}
+.meta{display:flex;gap:14px;align-items:center;margin-top:16px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:12px}
+.meta button{margin-left:auto;background:transparent;border:1px solid var(--line);color:var(--dim);font-size:12px;font-weight:500;padding:3px 10px}
+.meta button:hover{color:var(--tx)}
+.err{background:var(--errs);border-color:transparent;color:var(--err)}
+.err small{display:block;color:var(--dim);margin-top:6px;font-size:13px}
+.load{display:flex;align-items:center;gap:12px;color:var(--dim)}
+.spin{width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--ac);border-radius:50%;animation:s .8s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+@media(max-width:560px){form{flex-direction:column;align-items:stretch}.seg{margin-left:0}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body class="empty">
+<div class="wrap">
+  <header>
+    <h1>Personal Agent</h1>
+    <div class="status"><span class="dot" id="dot"></span><span id="stat">Ready</span></div>
+  </header>
+
+  <div class="stage">
+    <div id="thread"></div>
+    <div class="hello">What can I help you with?<small>Tasks, calendar and more, through your n8n workflow</small></div>
+    <div class="composer">
+  <div class="card">
+      <form id="f">
+        <textarea id="q" rows="1" aria-label="Message" placeholder="Ask your agent… (Ctrl+Enter to send)">What are task need to be done.</textarea>
+        <button class="send" id="go" type="submit">Send</button>
+      </form>
+      <div class="row">
+        <button class="chip" type="button">What are task need to be done.</button>
+        <button class="chip" type="button">What is on my calendar today?</button>
+      </div>
+    </div>
+  
+  </div>
+  </div>
+</div>
+
+<script>
+const BASE = 'https://rgl21345.app.n8n.cloud';
+const PATH = "aqib's-pa";
+const API_KEY = 'aqibansari22298@gmail.com';
+const HEADER = 'AQIB-PA-API-KEY';
+const mode = 'webhook';
+const $ = id => document.getElementById(id);
+const url = () => `${BASE}/${mode}/${encodeURIComponent(PATH).replace(/%27/g,"'")}`;
+
+// markdown -> safe HTML
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const inl = s => {
+  const links=[];
+  const keep=(u,t)=>{
+    u=u.trim().replace(/&amp;/g,'&');
+    if(!/^(https?:|mailto:)/i.test(u)) return t;
+    links.push(`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(t)}</a>`);
+    return '\u0000'+(links.length-1)+'\u0000';
+  };
+  s=s.replace(/<a\s[^>]*?href\s*=\s*["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi,(m,u,t)=>keep(u,t.replace(/<[^>]+>/g,'').trim()||u))
+     .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,(m,t,u)=>keep(u,t))
+     .replace(/(^|[\s(>])(https?:\/\/[^\s<>"')\]]*[^\s<>"')\].,;:!?])/g,(m,p,u)=>p+keep(u,u.length>60?u.slice(0,57)+'…':u));
+  return esc(s).replace(/&lt;br\s*\/?&gt;/gi,'<br>')
+    .replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/(^|[^*])\*([^*\s][^*]*?)\*/g,'$1<i>$2</i>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/\u0000(\d+)\u0000/g,(m,n)=>links[+n]);
+};
+function cell(s,head){
+  const t=s.trim(), h=inl(t);
+  if(!head && /^(needs action|pending|open|in.?progress)$/i.test(t)) return `<span class="pill">${h}</span>`;
+  if(!head && /^(completed|done)$/i.test(t)) return `<span class="pill ok">${h}</span>`;
+  return h;
+}
+function md(src){
+  const L=src.replace(/\r/g,'').split('\n'); let o='',i=0;
+  const isRow=l=>/^\s*\|.*\|\s*$/.test(l), li=l=>l.match(/^\s*([*\-•]|\d+\.)\s+(.*)$/);
+  while(i<L.length){
+    const l=L[i];
+    if(!l.trim()){i++;continue}
+    if(isRow(l)&&L[i+1]&&/^\s*\|[\s:\-|]+\|\s*$/.test(L[i+1])){
+      const row=x=>x.trim().replace(/^\||\|$/g,'').split('|');
+      let t='<div class="tw"><table><thead><tr>'+row(l).map(c=>`<th>${cell(c,1)}</th>`).join('')+'</tr></thead><tbody>';
+      i+=2;
+      while(i<L.length&&isRow(L[i])){t+='<tr>'+row(L[i]).map(c=>`<td>${cell(c)}</td>`).join('')+'</tr>';i++}
+      o+=t+'</tbody></table></div>';continue;
+    }
+    let m=li(l);
+    if(m){
+      const ord=/\d/.test(m[1]); let t=ord?'<ol>':'<ul>';
+      while(i<L.length&&(m=li(L[i]))){
+        let txt=m[2]; i++;
+        while(i<L.length&&L[i].trim()&&!li(L[i])&&!isRow(L[i])&&/^\s{2,}/.test(L[i])){txt+=' '+L[i].trim();i++}
+        t+=`<li>${inl(txt)}</li>`;
+        while(i<L.length&&!L[i].trim()&&li(L[i+1]||'')) i++;
+      }
+      o+=t+(ord?'</ol>':'</ul>');continue;
+    }
+    const h=l.match(/^#{1,4}\s+(.*)$/);
+    if(h){o+=`<h3>${inl(h[1])}</h3>`;i++;continue}
+    if(/^\s*(-{3,}|\*{3,})\s*$/.test(l)){i++;continue}
+    const p=[l]; i++;
+    while(i<L.length&&L[i].trim()&&!isRow(L[i])&&!li(L[i])&&!/^#{1,4}\s/.test(L[i])){p.push(L[i]);i++}
+    const para=p.join(' '), t=para.match(/^\*\*(.+?)\*\*:?\s*$/);
+    o+=t?`<h3>${inl(t[1])}</h3>`:`<p>${inl(para)}</p>`;
+  }
+  return o;
+}
+
+// UI
+document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{$('q').value=c.textContent;grow();$('f').requestSubmit()});
+$('q').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();$('f').requestSubmit()}});
+const q=$('q');
+function grow(){q.style.height='auto';q.style.height=q.scrollHeight+2+'px';q.style.overflowY=q.scrollHeight+2>parseFloat(getComputedStyle(q).maxHeight)?'auto':'hidden'}
+q.addEventListener('input',grow); addEventListener('resize',grow); grow();
+const status=(cls,txt)=>{$('dot').className='dot '+cls;$('stat').textContent=txt};
+
+async function send(query){
+  const fd=new FormData(); fd.append('query',query);
+  const r=await fetch(url(),{method:'POST',headers:{[HEADER]:API_KEY},body:fd});
+  const raw=await r.text(); let d;
+  try{d=JSON.parse(raw)}catch{d={response:raw}}
+  if(!r.ok) throw Object.assign(new Error(d.message||('HTTP '+r.status)),{status:r.status});
+  if(Array.isArray(d)) d=d[0]||{};
+  return d.response??d.output??d.text??'```\n'+JSON.stringify(d,null,2)+'\n```';
+}
+
+$('f').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const query=$('q').value.trim(); if(!query) return;
+  document.body.classList.remove('empty'); $('go').disabled=true; status('busy','Working…');
+  const th=$('thread');
+  th.insertAdjacentHTML('beforeend',`<div class="q"><span>${esc(query)}</span></div>`);
+  const box=document.createElement('div'); box.className='card ans';
+  box.innerHTML='<div class="load"><div class="spin"></div>Waiting for your agent…</div>';
+  th.appendChild(box); box.scrollIntoView({behavior:'smooth',block:'end'});
+  const t0=performance.now();
+  try{
+    const text=await send(query), ms=Math.round(performance.now()-t0);
+    box.innerHTML=md(text)+`<div class="meta"><span>${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span><span>${(ms/1000).toFixed(1)}s</span><button type="button">Copy</button></div>`;
+    const b=box.querySelector('.meta button'); b.onclick=()=>{navigator.clipboard.writeText(text);b.textContent='Copied'};
+    status('ok','Connected'); box.scrollIntoView({behavior:'smooth',block:'end'});
+  }catch(err){
+    box.classList.add('err');
+    const net=err instanceof TypeError;
+    box.innerHTML=`<b>Request failed:</b> ${esc(err.message)}<small>${net
+      ?'The browser could not reach the webhook. Check that CORS (Allowed Origins) is enabled on the n8n Webhook node and that the workflow is active.'
+      :err.status===404?'Webhook not found. Make sure the workflow is published/active in n8n so the production URL is live.'
+      :'Check the API key header and the workflow execution log in n8n.'}</small>`;
+    status('bad','Error');
+  }finally{$('go').disabled=false; $('q').value=''; grow(); $('q').focus()}
+});
+</script>
+</body>
+</html>
